@@ -1,38 +1,8 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C6 | ESP32-H2 | ESP32-S2 | ESP32-S3 |
-| ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- |
+uart 点灯指令：02 00 01 01 01 00 03 ：点灯
+废话：出来工作2年了，工作几乎都有Android或者Linux的驱动有关系，很久不碰这些学生时代的板子了。心血来潮，买了一块s3的板子，玩一玩。
+1:使用环境是ubantu 24.04 与vscode idf
+2:Kconfig.projbuild 文件用于定义我们自己的编译宏，目前主要使用了BUILD_DEBUG_MODE区分不同的版本，比如user版本关闭几乎自定义的全部log
+3:对于不同的外设除必要的打印log的uart 以外全部当作模块处理，每个程序注册Peripheral_Init_Entry_t，list_os_deal_with_t就行了
+4:模块太过独立被编译器优化时，参考main里面的cmake文件注释
 
-# _Sample project_
-
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
-
-This is the simplest buildable example. The example is used by command `idf.py create-project`
-that copies the project to user specified path and set it's name. For more information follow the [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project)
-
-
-
-## How to use example
-We encourage the users to use the example as a template for the new projects.
-A recommended way is to follow the instructions on a [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project).
-
-## Example folder contents
-
-The project **sample_project** contains one source file in C language [main.c](main/main.c). The file is located in folder [main](main).
-
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt`
-files that provide set of directives and instructions describing the project's source files and targets
-(executable, library, or both). 
-
-Below is short explanation of remaining files in the project folder.
-
-```
-├── CMakeLists.txt
-├── main
-│   ├── CMakeLists.txt
-│   └── main.c
-└── README.md                  This is the file you are currently reading
-```
-Additionally, the sample project contains Makefile and component.mk files, used for the legacy Make based build system. 
-They are not used or needed when building with CMake and idf.py.
-
-
-02 00 01 01 01 00 03 ：点灯
+当前已经实现：uart0通信，通过uart0控制一个gpio电平
