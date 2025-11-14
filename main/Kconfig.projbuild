@@ -1,0 +1,13 @@
+config BUILD_DEBUG_MODE
+    bool "Enable My Custom Feature"
+    default y
+    help
+        Enable this to use a special feature in your main application.
+
+    # 定义一个数字选项
+config BUFFER_SIZE
+    int "Custom Buffer Size"
+    default 1024
+    range 128 4096
+    help
+        Set the size of the internal application buffer.

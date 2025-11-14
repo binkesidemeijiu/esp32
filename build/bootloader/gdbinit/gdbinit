@@ -1,0 +1,2 @@
+source /home/tianlong/work/esp32_workplace/s3_cheshi/build/bootloader/gdbinit/symbols
+source /home/tianlong/work/esp32_workplace/s3_cheshi/build/bootloader/gdbinit/connect
