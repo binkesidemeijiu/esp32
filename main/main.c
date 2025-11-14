@@ -22,6 +22,7 @@ void app_main(void)
         ret = nvs_flash_init();
     }
     usart_init(115200); //uart 脱离auto 最先初始化
+    //is_link();
     Auto_Initialize_And_Start();    //外设初始化
     task_start();       //任务创建
     for(;;)

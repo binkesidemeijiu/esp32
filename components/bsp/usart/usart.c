@@ -35,7 +35,7 @@ static void uart_event_task(void *pvParameters)
         // 等待UART事件
         if(xQueueReceive(uart0_queue, (void * )&event, (TickType_t)portMAX_DELAY))
         {
-          //data [0x02 1b][trng 1b][data type 1b][data len 2b][core data][trng 1b][0x03 1b]
+          //data [0x02 1b][trng 1b][data type 1b][data len 1b][core data][trng 1b][0x03 1b]
             switch(event.type)
             {
                 // 处理接收数据事件
@@ -46,9 +46,17 @@ static void uart_event_task(void *pvParameters)
                     if (len > 0)                                           /* 判断数据长度 */
                     {
                         uart_read_bytes(UART_UX,g_rx_buffer, len, 100);
+                        if(g_rx_buffer[0] != 0x02 || 
+                            g_rx_buffer[len - 1] != 0x03 ||
+                            g_rx_buffer[DATA_LEN] != (len - 6))
+                        {
+                            DEBUG_ERROR("data is no! \n");
+                            continue;
+                        }
+                        default_switch(g_rx_buffer[DATA_TYPE],len,g_rx_buffer);
                         g_rx_buffer[len] = '\0'; // 添加字符串结束符
-                        debug_info("Received data: %s\n", g_rx_buffer);
-                        // 处理接收到的数据,先偷懒后面再写
+                        printf_hex("data is",&g_rx_buffer[DATA_START],g_rx_buffer[DATA_LEN]);
+                        
                     }
                 // 其他事件处理
                 default:

@@ -4,6 +4,12 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h" 
 #include "stdio.h"
+#include "esp_log.h"
+#include <stdint.h>
+#define DATA_START 4
+#define DATA_LEN 3
+#define DATA_TYPE 2
+
 #ifdef CONFIG_BUILD_DEBUG_MODE
     #define DEBUG_INFO(fmt, ...) printf("[DEBUG] [fun = %s: line = %d]: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
     #define debug_info(fmt, ...) printf("[DEBUG]" fmt, ##__VA_ARGS__)
@@ -21,12 +27,14 @@
          uart_write_bytes(UART_PORT,(const char*)data, strlen((const char*)data));\
     } while(0)
 
+#if 1 //单模块太过独立，该死的编译器会直接给我优化干掉
 #define MODULE_INIT(__pEntry, __handler_func) \
     __attribute__((constructor)) \
     static void __register_module(void) \
     { \
         list_add(__pEntry, __handler_func); \
     }
+#endif
 
 
 
@@ -68,4 +76,6 @@ void suspend_all(uint16_t wake_flage);
 void Calculate_the_remaining_space(UBaseType_t uxHighWaterMark);
 void list_add(Peripheral_Init_Entry_t *pEntry,list_os_deal_with_t *handler_func);
 bool default_switch(uint8_t device_type,uint16_t total_len,uint8_t* buffer);
+void esp_log_hex(const char *tag, const uint8_t *data, size_t len);
+void printf_hex(const char *tag, const uint8_t *data, size_t len);
 #endif // __INIT_COMMON_H__

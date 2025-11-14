@@ -88,7 +88,6 @@ void Calculate_the_remaining_space(UBaseType_t uxHighWaterMark)
     }
 }
 
-//上面表的作用和方法拿去完成device_driver的初始化去了，在来一个表解决os_to_drv_core.c中每次修改都要改的宏控
 
 static void RegisterDeviceHandler(list_os_deal_with_t *handler_func)
 {
@@ -113,7 +112,8 @@ bool default_switch(uint8_t device_type,uint16_t total_len,uint8_t* buffer)
     // 遍历链表
     list_for_each(pCurrent,listHead)
     {
-        if (pCurrent->compare_id == device_type) {
+        if (pCurrent->compare_id == device_type) 
+        {
             // 找到匹配项，执行对应的回调函数
             if (pCurrent->os_and_drv_switch_fcn != NULL) {
                 pCurrent->os_and_drv_switch_fcn(total_len,buffer);
@@ -124,4 +124,44 @@ bool default_switch(uint8_t device_type,uint16_t total_len,uint8_t* buffer)
     }
     return false;
     
+}
+
+void esp_log_hex(const char *tag, const uint8_t *data, size_t len) 
+{ //log不容易出问题版本
+
+    if (data == NULL || len == 0) 
+    {
+        ESP_LOGI(tag, "Data: (null)");
+        return;
+    }
+    // 每个字节需要3个字符 (如 "AB ")，最后还需要一个 '\0' 结尾符
+    size_t str_len = len * 3 + 1;
+
+    char *hex_string = (char *)malloc(str_len);
+
+    if (hex_string == NULL) 
+    {
+        ESP_LOGE(tag, "Failed to allocate memory for hex string");
+        return;
+    }
+
+    for (size_t i = 0; i < len; ++i) 
+    {
+        sprintf(hex_string + i * 3, "%02X ", data[i]);
+    }
+
+    ESP_LOGI(tag, "Data: %s", hex_string);
+    free(hex_string);
+
+}
+void printf_hex(const char *tag, const uint8_t *data, size_t len) 
+{
+
+    printf("%s: \n", tag);
+    for (size_t i = 0; i < len; ++i) 
+    {
+        printf("%02X ", data[i]);
+    }
+    printf("\n");
+
 }

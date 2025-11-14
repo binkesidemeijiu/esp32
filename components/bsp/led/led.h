@@ -23,8 +23,5 @@ enum GPIO_OUTPUT_STATE
 /* LED取反定义 */
 #define LED_TOGGLE()    do { gpio_set_level(LED_GPIO_PIN, !gpio_get_level(LED_GPIO_PIN)); } while(0)  /* LED翻转 */
 
-/* 函数声明*/
-void led_init(void);    /* 初始化LED */
-
-
+//void is_link(void);
 #endif
