@@ -4,7 +4,7 @@
 #include "usart.h"
 #include "led.h"
 #include "init_common.h"
-
+#include "lcd_config.h"
 void app_main(void)
 {
     esp_err_t ret;
@@ -25,6 +25,7 @@ void app_main(void)
     //is_link();
     Auto_Initialize_And_Start();    //外设初始化
     task_start();       //任务创建
+    lcd_display_start(); 
     for(;;)
     {
 #ifdef CONFIG_BUILD_DEBUG_MODE

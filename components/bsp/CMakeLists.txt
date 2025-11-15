@@ -1,11 +1,13 @@
 set(src_dirs
             usart
             led
+            spi_lcd
             common)
 
 set(include_dirs
             usart
             led
+            spi_lcd
             common)
 
 set(requires

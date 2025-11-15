@@ -3,6 +3,9 @@
     "idf.port": "/dev/ttyUSB0",
     "files.associations": {
         "led.h": "c",
-        "id_define.h": "c"
+        "id_define.h": "c",
+        "lcd_config.h": "c",
+        "string.h": "c",
+        "stdio.h": "c"
     }
 }
