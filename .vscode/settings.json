@@ -6,6 +6,7 @@
         "id_define.h": "c",
         "lcd_config.h": "c",
         "string.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "cstdlib": "c"
     }
 }

@@ -12,7 +12,7 @@
 
 #ifdef CONFIG_BUILD_DEBUG_MODE
     #define DEBUG_INFO(fmt, ...) printf("[DEBUG] [fun = %s: line = %d]: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
-    #define debug_info(fmt, ...) printf("[DEBUG]" fmt, ##__VA_ARGS__)
+    #define debug_info(fmt, ...) printf("[DEBUG]" fmt "\n", ##__VA_ARGS__)
     #define debug_sam(fmt, ...)  printf(fmt, ##__VA_ARGS__)
 #else
     #define DEBUG_INFO(fmt, ...) 

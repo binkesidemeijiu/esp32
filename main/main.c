@@ -25,6 +25,7 @@ void app_main(void)
     //is_link();
     Auto_Initialize_And_Start();    //外设初始化
     task_start();       //任务创建
+    vTaskDelay(1000);
     lcd_display_start(); 
     for(;;)
     {

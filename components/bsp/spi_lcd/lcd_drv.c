@@ -55,16 +55,41 @@ static void lcd_drv_init(void)
     lcd_sequence_init(spi);
     debug_info("lcd sequence init");
 }
+
 void lcd_display_start(void)
 {
-    debug_info("start display\n");
-}
+    // 常见的 RGB56
+    //02 00 02 02 0f 0f 00 03
+    // 红色: 0xF800
+    // 绿色: 0x07E0
+    // 蓝色: 0x001F
+    // 白色: 0xFFFF
+    // 黑色: 0x0000
+
+  lcd_fill_screen_psram(spi,0xF800);
+  LCD_DELAY_MS(5000);
+  lcd_fill_screen_psram(spi,0x07E0);
+  LCD_DELAY_MS(5000);
+  lcd_fill_screen_psram(spi,0x001F);
+  LCD_DELAY_MS(5000);
+  lcd_fill_screen_psram(spi,0xFFE0);
+  LCD_DELAY_MS(5000);
+  lcd_fill_screen_psram(spi,0xBD19);
+  // LCD_DELAY_MS(10000);
+  // lcd_fill_screen_psram(spi,0x07E0);
+}   
 static void lcd_ctrl_fcn(uint16_t total_len,uint8_t* buffer)
 {
- /*以后用于实现显示uart发送数据到lcd*/
+    uint16_t color_trnsfer;
+    debug_info("total_len=%d",total_len);
+ if(total_len >= 7)
+ {
+    color_trnsfer = (buffer[4]<<8)|buffer[5];
+    lcd_fill_screen_psram(spi,color_trnsfer); //绿色
+ }
 }
 static list_os_deal_with_t lcd_entry = {
-    .compare_id = LED_CTRL,
+    .compare_id = LCD_CTRL,
     .os_and_drv_switch_fcn = lcd_ctrl_fcn,
     .pNext = NULL
 };
