@@ -2,16 +2,19 @@ set(src_dirs
             usart
             led
             spi_lcd
+            sdcard
             common)
 
 set(include_dirs
             usart
             led
             spi_lcd
+            sdcard
             common)
 
 set(requires
-            driver)
+            driver
+            fatfs)
 
 idf_component_register(SRC_DIRS ${src_dirs} INCLUDE_DIRS ${include_dirs} REQUIRES ${requires})
 

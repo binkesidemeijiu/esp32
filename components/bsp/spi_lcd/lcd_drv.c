@@ -1,5 +1,5 @@
 #include "lcd_config.h"
-
+#include "tfcard.h"
 spi_device_handle_t spi;
 static void lcd_spi_pre_transfer_callback(spi_transaction_t *t)
 {
@@ -43,6 +43,7 @@ static void lcd_spi_init(void)
     ESP_ERROR_CHECK(ret);
     //Attach the LCD to the SPI bus
     ret = spi_bus_add_device(LCD_HOST, &devcfg, &spi);
+    uget_sd_data(NULL,0);
     ESP_ERROR_CHECK(ret);
 }
 static void lcd_drv_init(void)
@@ -67,6 +68,7 @@ void lcd_display_start(void)
     // 黑色: 0x0000
 
   lcd_fill_screen_psram(spi,0xF800);
+#if 0
   LCD_DELAY_MS(5000);
   lcd_fill_screen_psram(spi,0x07E0);
   LCD_DELAY_MS(5000);
@@ -75,9 +77,29 @@ void lcd_display_start(void)
   lcd_fill_screen_psram(spi,0xFFE0);
   LCD_DELAY_MS(5000);
   lcd_fill_screen_psram(spi,0xBD19);
+#endif
   // LCD_DELAY_MS(10000);
   // lcd_fill_screen_psram(spi,0x07E0);
 }   
+void display_update(uint8_t* buf,uint32_t len)
+{
+    // 占位符函数，用于将显示内容更新到 LCD
+    for(;;)
+    {
+        if(len > PARALLEL_LINES * 320 * 2)
+        {
+            lcd_send_raw(spi, buf,PARALLEL_LINES * 320 * 2, true);
+            len -= PARALLEL_LINES * 320 * 2;
+            buf += PARALLEL_LINES * 320 * 2;
+        }
+        else
+        {
+            lcd_send_raw(spi, buf,len, true);
+            break;
+        }
+    }
+        
+}
 static void lcd_ctrl_fcn(uint16_t total_len,uint8_t* buffer)
 {
     uint16_t color_trnsfer;
