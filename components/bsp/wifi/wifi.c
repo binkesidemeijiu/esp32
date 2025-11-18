@@ -161,7 +161,7 @@ static void tcp_server_task(void *pvParameters) {
 }
 static void wifi_task_init(void)
 {
-    xTaskCreate(tcp_server_task, "tcp_server", 4096, NULL, 5, NULL);
+    xTaskCreate(tcp_server_task, "tcp_server", 4096, NULL, 5, &xwifiTaskHandle);
 }
 #ifdef CONFIG_BUILD_DEBUG_MODE
 static void logwifi_word_debug(UBaseType_t uxHighWaterMark)
