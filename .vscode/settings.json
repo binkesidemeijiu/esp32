@@ -11,5 +11,5 @@
     },
     "idf.espIdfPathWin": "d:\\Espressif\\frameworks\\esp-idf-v5.5.1",
     "idf.toolsPathWin": "d:\\Espressif\\frameworks\\esp-idf-v5.5.1\\tools",
-    "idf.pythonInstallPath": "d:\\Espressif\\frameworks\\esp-idf-v5.5.1\\tools\\tools\\idf-python\\3.11.2\\python.exe"
+    "idf.pythonInstallPath": "/usr/bin/python3"
 }

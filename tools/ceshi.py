@@ -1,41 +1,43 @@
 from PIL import Image
 import struct
-import os
 
-def image_to_rgb565_bin(input_path, output_path):
+def image_to_bgr565_bin(input_path, output_path, width=240, height=320):
+    """
+    Converts an image to BGR565 format for ST7789V displays
+    configured with MADCTL=0x08 (BGR color order).
+    - Blue:  5 bits
+    - Green: 6 bits
+    - Red:   5 bits
+    """
     try:
-        # 1. 打开图片并转换为 RGB 模式
         img = Image.open(input_path).convert("RGB")
-        width, height = img.size
-        print(f"原始图片尺寸: {width}x{height}")
+        if img.size != (width, height):
+            print(f"Info: Resizing image from {img.size} to {width}x{height}.")
+            img = img.resize((width, height))
 
-        # 检查尺寸是否符合目标要求 (320x240)
-        if width != 240 or height != 320:
-            print("WARN: 尺寸不匹配。将图片缩放/裁剪至 320x240。")
-            # 这里简单使用 resize，您也可以根据需求使用 crop
-            img = img.resize((240,320))
-            width, height = img.size
-
-        # 2. 准备输出文件
         with open(output_path, 'wb') as f:
-            # 3. 遍历每个像素并转换为 RGB565
             for y in range(height):
                 for x in range(width):
-                    # 获取 RGB 颜色值
                     r, g, b = img.getpixel((x, y))
-                    rgb565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3)
-                    f.write(struct.pack('<H', rgb565))
 
-        print(f"成功将图片转换为 {width}x{height} RGB565 格式，保存至: {output_path}")
-        print(f"文件大小: {os.path.getsize(output_path)} 字节")
-        
-    except FileNotFoundError:
-        print(f"错误：未找到文件 {input_path}")
+                    # 8-bit R,G,B -> 5-bit R, 6-bit G, 5-bit B
+                    r_5 = r >> 3
+                    g_6 = g >> 2
+                    b_5 = b >> 3
+                    
+                    # Assemble into a 16-bit word in BBBBB GGGGGG RRRRR order
+                    pixel_color = (b_5 << 11) | (g_6 << 5) | r_5
+                        
+                    # Write to file using BIG-ENDIAN byte order '>H'
+                    # TFT controllers expect the high byte first
+                    f.write(struct.pack('>H', pixel_color))
+
+        print(f"成功! 已生成匹配硬件的 BGR565 格式文件: {output_path}")
+
     except Exception as e:
-        print(f"处理图片时发生错误: {e}")
+        print(f"发生错误: {e}")
 
-# --- 使用示例 ---
-input_image_file = "input_image.png"  # 替换为您的图片文件路径
-output_bin_file = "data.txt"          # 替换为您希望存储在 SD 卡上的文件名
-
-image_to_rgb565_bin(input_image_file, output_bin_file)
+# --- 使用方法 ---
+input_image_file = "input_image.png"  # 换成你的图片
+output_bin_file = "data.txt"
+image_to_bgr565_bin(input_image_file, output_bin_file)

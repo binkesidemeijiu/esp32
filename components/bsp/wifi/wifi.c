@@ -144,7 +144,7 @@ static void tcp_server_task(void *pvParameters) {
             if (len <= 0) {
                 // 客户端断开连接或错误
                 ESP_LOGI("TCP_SERVER", "Client disconnected or error: %d", len);
-                continue;
+                break;
             } else {
                 rx_buffer[len] = 0; // 确保是C字符串
                 ESP_LOGI("TCP_SERVER", "Received: %s", rx_buffer);

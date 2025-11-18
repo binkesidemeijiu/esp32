@@ -11,8 +11,10 @@
 #include <dirent.h> 
 extern void display_update(uint8_t* buf,uint32_t len);
 static const char *TAG = "TFCARD_DEMO";
+static void tf_init(void);
 void uget_sd_data(uint8_t *buf, uint32_t len)
 {
+#if 0
     // 读取SD卡数据的函数占位符
     size_t buffer_size = 153600; // 240*320*2
     uint16_t *frame_buffer = NULL;
@@ -27,8 +29,10 @@ void uget_sd_data(uint8_t *buf, uint32_t len)
         if(i > 48000 && i < 153600)
             frame_buffer[i] = 0xF800;
     }
-    display_update((uint8_t*)frame_buffer,buffer_size);
+    //display_update((uint8_t*)frame_buffer,buffer_size);
     heap_caps_free(frame_buffer);
+#endif
+tf_init();
 }
 static void tf_init(void)
 {
@@ -103,6 +107,7 @@ static void tf_init(void)
             ESP_LOGE(TAG, "Failed to allocate PSRAM for PNG data.");
         }
     size_t read_size = fread(png_data, 1, file_size, f);
+    ESP_LOGE(TAG, "SEND DATA.TXT LLHHLL.read_size = %d\n",read_size);
     display_update(png_data,read_size);
     heap_caps_free(png_data);
     fclose(f);
@@ -145,7 +150,7 @@ static void tf_init(void)
 static Peripheral_Init_Entry_t tfcard_init = {
     .pName          = "tf card",
     .device_id      = 0x00,
-    .pfnPeriphInit  = tf_init,
+    .pfnPeriphInit  = NULL,//tf_init,
     .pfnNvicInit    = NULL, //
     .pfnTaskCreate  = NULL,
     .suspend        = NULL,

@@ -66,17 +66,17 @@ void lcd_display_start(void)
     // 蓝色: 0x001F
     // 白色: 0xFFFF
     // 黑色: 0x0000
-  lcd_fill_screen_psram(spi,0xF800);
+  //lcd_fill_screen_psram(spi,0xF800);
+  //uget_sd_data(NULL,0);
+#if 1
+  LCD_DELAY_MS(1000);
+  lcd_fill_screen_psram(spi,0x00f8); //这个屏是spi大端 所以高低位要改f800->00f8
+  LCD_DELAY_MS(1000);
+  lcd_fill_screen_psram(spi,0xE007);
+  LCD_DELAY_MS(1000);
+  lcd_fill_screen_psram(spi,0x1F00);
+  LCD_DELAY_MS(1000);
   uget_sd_data(NULL,0);
-#if 0
-  LCD_DELAY_MS(5000);
-  lcd_fill_screen_psram(spi,0x07E0);
-  LCD_DELAY_MS(5000);
-  lcd_fill_screen_psram(spi,0x001F);
-  LCD_DELAY_MS(5000);
-  lcd_fill_screen_psram(spi,0xFFE0);
-  LCD_DELAY_MS(5000);
-  lcd_fill_screen_psram(spi,0xBD19);
 #endif
   // LCD_DELAY_MS(10000);
   // lcd_fill_screen_psram(spi,0x07E0);
@@ -84,6 +84,7 @@ void lcd_display_start(void)
 void display_update(uint8_t* buf,uint32_t len)
 {
     // 占位符函数，用于将显示内容更新到 LCD
+    lcd_send(spi, 0x2C, NULL, 0); 
     for(;;)
     {
         if(len > PARALLEL_LINES * 320 * 2)
