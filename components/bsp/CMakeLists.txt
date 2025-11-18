@@ -3,6 +3,7 @@ set(src_dirs
             led
             spi_lcd
             sdcard
+            wifi
             common)
 
 set(include_dirs
@@ -10,11 +11,15 @@ set(include_dirs
             led
             spi_lcd
             sdcard
+            wifi
             common)
 
 set(requires
             driver
-            fatfs)
+            fatfs
+            esp_event
+            esp_wifi
+            esp_netif)
 
 idf_component_register(SRC_DIRS ${src_dirs} INCLUDE_DIRS ${include_dirs} REQUIRES ${requires})
 

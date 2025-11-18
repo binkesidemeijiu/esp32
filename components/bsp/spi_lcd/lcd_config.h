@@ -31,7 +31,7 @@
 #define PIN_NUM_MOSI 47
 #define PIN_NUM_CLK  21
 #define PIN_NUM_CS   42
-#define LCD_HOST    SPI2_HOST
+#define LCD_HOST    SPI3_HOST
 #define PARALLEL_LINES 16
 #define LCD_RS 41  //cmd or data
 #define LCD_BL 14 //背光

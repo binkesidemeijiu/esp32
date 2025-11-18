@@ -43,7 +43,7 @@ static void lcd_spi_init(void)
     ESP_ERROR_CHECK(ret);
     //Attach the LCD to the SPI bus
     ret = spi_bus_add_device(LCD_HOST, &devcfg, &spi);
-    uget_sd_data(NULL,0);
+    
     ESP_ERROR_CHECK(ret);
 }
 static void lcd_drv_init(void)
@@ -66,8 +66,8 @@ void lcd_display_start(void)
     // 蓝色: 0x001F
     // 白色: 0xFFFF
     // 黑色: 0x0000
-
   lcd_fill_screen_psram(spi,0xF800);
+  uget_sd_data(NULL,0);
 #if 0
   LCD_DELAY_MS(5000);
   lcd_fill_screen_psram(spi,0x07E0);

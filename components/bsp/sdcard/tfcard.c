@@ -77,6 +77,7 @@ static void tf_init(void)
     // 打印SD卡信息
     sdmmc_card_print_info(stdout, card);
     // 创建并写入文件
+#if 0
     ESP_LOGI(TAG, "open sdcard file");
     FILE *f = fopen("/sdcard/hello.txt", "w");
     if (f == NULL) {
@@ -86,23 +87,26 @@ static void tf_init(void)
         fclose(f);
         ESP_LOGI(TAG, "file written");
     }
-    
+#endif
     // 读取文件
     ESP_LOGI(TAG, "read sdcard file");
-    f = fopen("/sdcard/hello.txt", "r");
+    FILE *f = fopen("/sdcard/data.txt", "r"); //
     if (f == NULL) {
         ESP_LOGE(TAG, "no file opened");
     } else {
-#if 0
+#if 1
     fseek(f, 0, SEEK_END);
-    long file_size = ftell(f);
+    uint32_t file_size = ftell(f);
     fseek(f, 0, SEEK_SET); // 回到文件开头
     uint8_t *png_data = (uint8_t *)heap_caps_malloc(file_size, MALLOC_CAP_SPIRAM);
     if (png_data == NULL) {
             ESP_LOGE(TAG, "Failed to allocate PSRAM for PNG data.");
         }
     size_t read_size = fread(png_data, 1, file_size, f);
-#endif
+    display_update(png_data,read_size);
+    heap_caps_free(png_data);
+    fclose(f);
+#else
         char line[64];
         fgets(line, sizeof(line), f);
         fclose(f);
@@ -111,10 +115,13 @@ static void tf_init(void)
         if (pos) {
             *pos = '\0';
         }
-        ESP_LOGI(TAG, "read sdfile: \"%s\"", line);
+        ESP_LOGI(TAG, "read sdfile: %s", line);
+#endif
+
     }
     
     // 列出根目录文件
+#if 0
     ESP_LOGI(TAG, "list sdcard root dir");
     DIR *dir = opendir("/sdcard");
     if (dir == NULL) {
@@ -126,7 +133,7 @@ static void tf_init(void)
         }
         closedir(dir);
     }
-    
+#endif
     // 卸载文件系统
     esp_vfs_fat_sdcard_unmount("/sdcard", card);
     ESP_LOGI(TAG, "sdcard unmounted");
