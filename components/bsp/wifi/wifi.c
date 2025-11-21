@@ -16,22 +16,32 @@ void __wifi_link__(void)//用于cmake别把这个点o直接洗白
 static void event_handler(void* arg, esp_event_base_t event_base,
                           int32_t event_id, void* event_data)
 {
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) 
+    {
         esp_wifi_connect();
-    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        if (s_retry_num < MAXIMUM_RETRY) {
+    } 
+    else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) 
+    {
+        xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+        if (s_retry_num < MAXIMUM_RETRY) 
+        {
             esp_wifi_connect();
             s_retry_num++;
-            ESP_LOGI(TAG, "重试连接到 AP");
-        } else {
+            ESP_LOGI(TAG, "retry connect AP");
+        } 
+        else 
+        {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-        }
-        ESP_LOGI(TAG,"连接到 AP 失败");
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+            ESP_LOGI(TAG,"connect AP fail");
+        }    
+    } 
+    else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) 
+    {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(TAG, "获取到 IP:" IPSTR, IP2STR(&event->ip_info.ip));
+        ESP_LOGI(TAG, "get IP:" IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+        xEventGroupClearBits(s_wifi_event_group, WIFI_FAIL_BIT);
     }
 }
 static void wifi_init_sta(void)
@@ -82,6 +92,7 @@ static void wifi_init_sta(void)
 
     ESP_LOGI(TAG, "wifi_init_sta 完成");
 
+#if 0
     /* 等待连接建立或超过最大重试次数 */
     EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
             WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
@@ -102,63 +113,107 @@ static void wifi_init_sta(void)
     // ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler));
     // ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler));
     // vEventGroupDelete(s_wifi_event_group);
+#endif
 }
-
-
+static void handle_client_session(int sock) 
+{
+    char rx_buffer[128];
+    int len;
+    
+    while (1) {
+        len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
+        if (len <= 0) {
+            ESP_LOGI(TAG, "connect error!");
+            break; // 退出会话，返回上一级
+        }
+        
+        rx_buffer[len] = 0;
+        ESP_LOGI(TAG, "recv: %s", rx_buffer);
+        send(sock, "ACK", 3, 0);
+    }
+    // 会话结束，关闭 socket
+    shutdown(sock, 0);
+    close(sock);
+}
 
 static void tcp_server_task(void *pvParameters) {
-    char rx_buffer[128];
     int addr_family = AF_INET;
     int ip_protocol = IPPROTO_IP;
-    int sock,len;
-    // 1. 创建 Socket
-    int listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
-    
-    struct sockaddr_in dest_addr;
-    dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(TCP_PORT);
-
-    // 2. 绑定地址
-    bind(listen_sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-    
-    // 3. 监听端口
-    listen(listen_sock, 1); // 允许 1 个连接排队
-
+    char addr_str[128];
     while (1) {
-        // 4. 接受连接
-        struct sockaddr_in source_addr;
-        socklen_t addr_len = sizeof(source_addr);
-        sock = accept(listen_sock, (struct sockaddr *)&source_addr, &addr_len);
-        
-        if (sock < 0) {
-            ESP_LOGE("TCP_SERVER", "Unable to accept connection: errno %d", errno);
+        // 1. 等待 Wi-Fi 连接成功
+        ESP_LOGI(TAG, "Waiting for WiFi connection...");
+        xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+
+        struct sockaddr_in dest_addr;
+        dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        dest_addr.sin_family = AF_INET;
+        dest_addr.sin_port = htons(TCP_PORT);
+
+        // 2. 创建 Socket
+        int listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
+        if (listen_sock < 0) {
+            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
             continue;
         }
-        ESP_LOGI("TCP_SERVER", "Client connected");
 
-        // 5. 收发数据循环
-        while (1) {
-            len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
-          //  vTaskDelay(1000 / portTICK_PERIOD_MS);
-            if (len <= 0) {
-                // 客户端断开连接或错误
-                ESP_LOGI("TCP_SERVER", "Client disconnected or error: %d", len);
-                break;
-            } else {
-                rx_buffer[len] = 0; // 确保是C字符串
-                ESP_LOGI("TCP_SERVER", "Received: %s", rx_buffer);
-                
-                // 示例：向客户端发送回执
-                send(sock, "ACK: Received!", strlen("ACK: Received!"), 0);
-            }
+        // 3. 设置 Socket 选项 (SO_REUSEADDR 是必须的，防止重启后端口占用)
+        int opt = 1;
+        setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+        // 4. 绑定
+        int err = bind(listen_sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+        if (err != 0) {
+            ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+            close(listen_sock);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            continue;
         }
-        // 6. 关闭连接
-        close(sock);
+        
+        // 5. 监听
+        err = listen(listen_sock, 1);
+        if (err != 0) {
+            ESP_LOGE(TAG, "Error occurred during listen: errno %d", errno);
+            close(listen_sock);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            continue;
+        }
+        
+        ESP_LOGI(TAG, "Socket listening on port %d", TCP_PORT);
+
+        // 6. 接受客户端循环
+        for(;;) 
+        {
+            struct sockaddr_in source_addr;
+            socklen_t addr_len = sizeof(source_addr);
+            
+            // accept 是阻塞的
+            int sock = accept(listen_sock, (struct sockaddr *)&source_addr, &addr_len);
+            
+            if (sock < 0) {
+                ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
+                break; // 跳出内层循环，重建监听 Socket
+            }
+            
+            // 打印客户端 IP
+
+            inet_ntoa_r(source_addr.sin_addr, addr_str, sizeof(addr_str) - 1);
+            ESP_LOGI(TAG, "Socket accepted ip address: %s", addr_str);
+
+            handle_client_session(sock);
+            //重新建立链接才会往下走
+            shutdown(sock, 0);
+            close(sock);
+        }
+        
+        // 只有当 accept 失败或者需要重启服务时才会运行到这里
+        close(listen_sock);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
-    close(listen_sock);
     vTaskDelete(NULL);
 }
+
 static void wifi_task_init(void)
 {
     xTaskCreate(tcp_server_task, "tcp_server", 4096, NULL, 5, &xwifiTaskHandle);

@@ -11,30 +11,9 @@
 #include <dirent.h> 
 extern void display_update(uint8_t* buf,uint32_t len);
 static const char *TAG = "TFCARD_DEMO";
-static void tf_init(void);
-void uget_sd_data(uint8_t *buf, uint32_t len)
-{
-#if 0
-    // 读取SD卡数据的函数占位符
-    size_t buffer_size = 153600; // 240*320*2
-    uint16_t *frame_buffer = NULL;
-    frame_buffer = (uint16_t *)heap_caps_malloc(buffer_size, MALLOC_CAP_SPIRAM);
 
-    if (frame_buffer == NULL) {
-        debug_info("FATAL: Failed to allocate framebuffer in PSRAM!");
-        return; // 内存分配失败，直接返回
-    }
-    for (int i = 0; i < 320*240; i++) {
-        frame_buffer[i] = 0x07E0;
-        if(i > 48000 && i < 153600)
-            frame_buffer[i] = 0xF800;
-    }
-    //display_update((uint8_t*)frame_buffer,buffer_size);
-    heap_caps_free(frame_buffer);
-#endif
-tf_init();
-}
-static void tf_init(void)
+
+void tf_init(void)
 {
     sdmmc_card_t *card = NULL;
          // 配置SPI总线
@@ -146,17 +125,3 @@ static void tf_init(void)
     // 释放SPI总线
     spi_bus_free(host.slot);
 }
-
-static Peripheral_Init_Entry_t tfcard_init = {
-    .pName          = "tf card",
-    .device_id      = 0x00,
-    .pfnPeriphInit  = NULL,//tf_init,
-    .pfnNvicInit    = NULL, //
-    .pfnTaskCreate  = NULL,
-    .suspend        = NULL,
-    .resume         = NULL,
-    .debug_word     = NULL,
-    .pNext          = NULL,
-};
-
-MODULE_INIT(&tfcard_init,NULL)

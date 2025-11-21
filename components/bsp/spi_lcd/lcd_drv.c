@@ -76,7 +76,7 @@ void lcd_display_start(void)
   LCD_DELAY_MS(1000);
   lcd_fill_screen_psram(spi,0x1F00);
   LCD_DELAY_MS(1000);
-  uget_sd_data(NULL,0);
+  tf_init();
 #endif
   // LCD_DELAY_MS(10000);
   // lcd_fill_screen_psram(spi,0x07E0);

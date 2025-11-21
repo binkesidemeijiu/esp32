@@ -7,5 +7,5 @@
 #define TF_CLK   39
 #define TF_CS    1
 
-void uget_sd_data(uint8_t *buf, uint32_t len);
+void tf_init(void);
 #endif

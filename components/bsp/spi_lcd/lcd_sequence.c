@@ -87,7 +87,7 @@ void lcd_sequence_init(spi_device_handle_t spi)
 {
  // 初始化lcd的指令序列
  #if 1
- uint8_t id_data[4] = {0};
+    uint8_t id_data[4] = {0};
     lcd_read_reg(spi,0x04,id_data,3);
     ESP_LOGI("LCD_DETECT", "ID from 0x04: 0x%02X 0x%02X 0x%02X", id_data[0], id_data[1], id_data[2]);
     lcd_send(spi,0x11, NULL, 0); 
