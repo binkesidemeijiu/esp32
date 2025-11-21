@@ -1,5 +1,6 @@
 #include "ovcamera.h"
 #include "id_define.h"
+#include "esp_timer.h"
 static const char *TAG = "CAM_JPEG_DEC";
 static uint8_t *rgb565_out_buf = NULL;
 static volatile uint8_t custom_cmd;
@@ -35,7 +36,7 @@ static esp_err_t init_camera(void)
     // 核心配置：使用 JPEG 格式
     config.pixel_format = PIXFORMAT_JPEG; 
     config.frame_size = FRAMESIZE_QVGA; // 320x240
-    config.jpeg_quality = 10; // 质量越低(数字越小)，体积越大，解码越慢；建议10-12
+    config.jpeg_quality = 6; // 质量越低(数字越小)，体积越大，解码越慢；建议10-12
     config.fb_count = 2; // 双缓冲建议开启
     config.fb_location = CAMERA_FB_IN_PSRAM;
     config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
@@ -86,7 +87,8 @@ static int8_t camera_ctl_algorithm(CAMERA_CTL camera_status)
 
         if(init_camera() != ESP_OK) return -1;
 
-        rgb565_out_buf = (uint8_t*)heap_caps_malloc(OUT_BUF_SIZE, MALLOC_CAP_SPIRAM);
+        //rgb565_out_buf = (uint8_t*)heap_caps_aligned_alloc(16,OUT_BUF_SIZE, MALLOC_CAP_SPIRAM);//缓冲区要求16字节对齐
+        rgb565_out_buf = jpeg_calloc_align(OUT_BUF_SIZE, 16);
         if (rgb565_out_buf == NULL)
         {
             ESP_LOGE(TAG, "Failed to allocate memory");
@@ -95,7 +97,7 @@ static int8_t camera_ctl_algorithm(CAMERA_CTL camera_status)
         }
         //这里可调解码后大小端
         dec_config.output_type = JPEG_PIXEL_FORMAT_RGB565_BE;
-        dec_config.rotate = JPEG_ROTATE_0D;
+        dec_config.rotate = JPEG_ROTATE_90D;
 
         jpeg_err = jpeg_dec_open(&dec_config,&jpeg_dec);
         if (jpeg_err != JPEG_ERR_OK)
@@ -105,41 +107,79 @@ static int8_t camera_ctl_algorithm(CAMERA_CTL camera_status)
             return -1;
         }
 
-        jpeg_io = (jpeg_dec_io_t *)calloc(1, sizeof(jpeg_dec_io_t));
+        jpeg_io = calloc(1, sizeof(jpeg_dec_io_t));
         if (!jpeg_io) {
              camera_ctl_algorithm(CAMERA_STOP);
              return -1;
         }
+#if 0
+    sensor_t * s = esp_camera_sensor_get();
+    s->set_special_effect(s, 2); // 0: No Effect, 2: Grayscale (灰度模式)
+    s->set_gainceiling(s, GAINCEILING_32X); 
+    s->set_vflip(s, 1);   // 垂直翻转
+    s->set_hmirror(s, 1); // 水平镜像关掉
+#endif
         g_camera_flags = CAMERA_INIT_SUCCESS;
 
     }
     break;
     case CAMERA_CAP:
     {
+        int64_t t_start, t_captured, t_decoded, t_end;
         if (g_camera_flags != CAMERA_INIT_SUCCESS) return -1;
+        t_start = esp_timer_get_time();
+        ESP_LOGE(TAG, "Camera Start 5 Success");
 
         camera_fb_t *fb = esp_camera_fb_get();
+        t_captured = esp_timer_get_time(); // 2. 拍照完成时间
         if (!fb) 
         {
             ESP_LOGE(TAG, "Camera Capture Failed");
             return -1;
         }
-        
+        ESP_LOGE(TAG, "Camera Start 6 Success");
         // 确保指针有效
-        if (jpeg_io && jpeg_dec && rgb565_out_buf) {
+        if (jpeg_io && jpeg_dec && rgb565_out_buf) 
+        {
             jpeg_io->inbuf = fb->buf;
             jpeg_io->inbuf_len = fb->len;
-            jpeg_io->outbuf = rgb565_out_buf;
-            
-            jpeg_err = jpeg_dec_process(jpeg_dec, jpeg_io);
-            if (jpeg_err == JPEG_ERR_OK)
-                display_update(rgb565_out_buf, OUT_BUF_SIZE);
-            else
-                ESP_LOGE(TAG, "Decode Failed: %d",jpeg_err);
+
+            jpeg_dec_header_info_t out_info;
+            jpeg_err = jpeg_dec_parse_header(jpeg_dec, jpeg_io,&out_info);
+
+            if (jpeg_err != JPEG_ERR_OK)
+            {
+                ESP_LOGE(TAG, "Parse Header Failed: %d", jpeg_err);
+                // 解析失败不要硬解，直接跳过
+            }
+            else 
+            {
+                // 4. 填入输出 Buffer 并解码
+                jpeg_io->outbuf = rgb565_out_buf;
+
+                ESP_LOGE(TAG, "Start Decoding: %dx%d", out_info.width, out_info.height);
+                jpeg_err = jpeg_dec_process(jpeg_dec, jpeg_io);
+                 t_decoded = esp_timer_get_time(); // 3. 解码完成时间
+                if (jpeg_err == JPEG_ERR_OK)
+                {
+                    display_update(rgb565_out_buf,jpeg_io->out_size);
+                    t_end = esp_timer_get_time(); 
+                     ESP_LOGI("PROFILE", "Cap: %lld ms, Dec: %lld ms, Disp: %lld ms | Total: %lld ms", \
+                     (t_captured - t_start) / 1000, \
+                     (t_decoded - t_captured) / 1000,   \
+                     (t_end - t_decoded) / 1000,    \
+                     (t_end - t_start) / 1000);
+        
+                }
+                else
+                {
+                    ESP_LOGE(TAG, "Decode Failed: %d", jpeg_err);
+                }
+            }
         }
-
+        
         esp_camera_fb_return(fb);
-
+           
     }
     break;
     default:
@@ -172,8 +212,10 @@ static void camera_main_task(void *pvParameters)
 
             // 刚启动后，传感器需要适应光线，丢弃前1-2帧，或者延时一小会儿，否则第一张图可能是全黑或偏色的
             vTaskDelay(pdMS_TO_TICKS(50)); // 给自动曝光一点时间
+            ESP_LOGE(TAG, "Camera Start 1 Success");
             fb_warmup = esp_camera_fb_get();
             if(fb_warmup) esp_camera_fb_return(fb_warmup); // 丢弃第一帧热身帧
+            ESP_LOGE(TAG, "Camera Start 2 Success");
         }
 
         // ---------------- 执行阶段 ----------------
@@ -181,8 +223,10 @@ static void camera_main_task(void *pvParameters)
         {
             if(custom_cmd == CAMERA_CAP)
             {
+                ESP_LOGE(TAG, "Camera Start 3 Success");
                 camera_ctl_algorithm(CAMERA_CAP);
                 camera_ctl_algorithm(CAMERA_STOP);
+                ESP_LOGE(TAG, "Camera Start 4 Success");
             }
             else if (custom_cmd == CAMERA_PREVIEW)
             {
@@ -220,7 +264,7 @@ static void camera_main_task(void *pvParameters)
 static void camera_task_create(void)
 {
     BaseType_t xReturn;
-    xReturn = xTaskCreate(camera_main_task, "camera_task",10240, NULL,(UBaseType_t)8, &cameraTaskHandle);
+    xReturn = xTaskCreate(camera_main_task, "camera_task",5240, NULL,(UBaseType_t)8, &cameraTaskHandle);
     if (xReturn != pdPASS)
     {
         DEBUG_ERROR("camera task create failed!\n");

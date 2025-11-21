@@ -93,7 +93,7 @@ void lcd_sequence_init(spi_device_handle_t spi)
     lcd_send(spi,0x11, NULL, 0); 
     LCD_DELAY_MS(255);
     //lcd_send(spi,0x13, NULL, 0);
-    LCD_SEND_CMD_DATA(spi,0x36,0x00);
+    LCD_SEND_CMD_DATA(spi,0x36,0x00); //设置横屏显示避免camera软件旋转图像
    // LCD_SEND_CMD_DATA(spi,0xB6,0x0A,0x82); 
   //  LCD_SEND_CMD_DATA(spi,0xB0,0x00,0xE0); // 5 to 6 bit conversion: r0 = r5, b0 = b5
     LCD_SEND_CMD_DATA(spi,0x3a,0x05);

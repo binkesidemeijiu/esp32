@@ -32,7 +32,7 @@ static void lcd_spi_init(void)
         .max_transfer_sz = PARALLEL_LINES * 320 * 2 + 8
     };
     spi_device_interface_config_t devcfg = {
-        .clock_speed_hz = 10 * 1000 * 1000,     
+        .clock_speed_hz = 66 * 1000 * 1000,     
         .mode = 0,                              
         .spics_io_num = PIN_NUM_CS,             
         .queue_size = 7,                        //We want to be able to queue 7 transactions at a time
@@ -68,7 +68,7 @@ void lcd_display_start(void)
     // 黑色: 0x0000
   //lcd_fill_screen_psram(spi,0xF800);
   //uget_sd_data(NULL,0);
-#if 1
+#if 0
   LCD_DELAY_MS(1000);
   lcd_fill_screen_psram(spi,0x00f8); //这个屏是spi大端 所以高低位要改f800->00f8
   LCD_DELAY_MS(1000);
@@ -76,8 +76,9 @@ void lcd_display_start(void)
   LCD_DELAY_MS(1000);
   lcd_fill_screen_psram(spi,0x1F00);
   LCD_DELAY_MS(1000);
-  tf_init();
 #endif
+  tf_init();
+
   // LCD_DELAY_MS(10000);
   // lcd_fill_screen_psram(spi,0x07E0);
 }   
