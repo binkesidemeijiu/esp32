@@ -4,6 +4,7 @@ set(src_dirs
             spi_lcd
             sdcard
             wifi
+            camera
             common)
 
 set(include_dirs
@@ -12,6 +13,7 @@ set(include_dirs
             spi_lcd
             sdcard
             wifi
+            camera
             common)
 
 set(requires
@@ -19,7 +21,10 @@ set(requires
             fatfs
             esp_event
             esp_wifi
-            esp_netif)
+            esp_netif
+            esp32-camera 
+            esp_new_jpeg
+            esp_timer)
 
 idf_component_register(SRC_DIRS ${src_dirs} INCLUDE_DIRS ${include_dirs} REQUIRES ${requires})
 

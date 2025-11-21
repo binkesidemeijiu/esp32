@@ -7,3 +7,4 @@ idf_component_register(SRCS "main.c"
 #需要注意的是，如果要移除这个模块，那么直接移除这里就行了。一切不能通过移除这里移除的模块都不写这里来。
 target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,__led_link__")
 target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,__wifi_link__") 
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,__camera_link__") 

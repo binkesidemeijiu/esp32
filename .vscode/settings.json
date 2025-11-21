@@ -7,7 +7,9 @@
         "lcd_config.h": "c",
         "string.h": "c",
         "stdio.h": "c",
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "init_common.h": "c",
+        "ov2640.h": "c"
     },
     "idf.espIdfPathWin": "d:\\Espressif\\frameworks\\esp-idf-v5.5.1",
     "idf.toolsPathWin": "d:\\Espressif\\frameworks\\esp-idf-v5.5.1\\tools",
